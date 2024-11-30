@@ -9,9 +9,13 @@
 #include <queue.h>
 
 #define MAIN_TASK_PRIORITY      ( tskIDLE_PRIORITY + 1UL )
+#define BLINK_TASK_PRIORITY     ( tskIDLE_PRIORITY + 2UL )
 #define MAIN_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
+#define BLINK_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
+
 
 static struct can2040 cbus;
+int on = 0;
 
 QueueHandle_t msgs;
 
@@ -66,14 +70,25 @@ void send_string (struct can2040* cd, char* str, size_t len) {
 
 void send_task(__unused void *params) {
     while (1) {
+        printf("STARTING SEND\n");
         vTaskDelay(5000*portTICK_PERIOD_MS);
         send_string(&cbus, "HELLO WORLD\n", 12);
     }
 };
 
+void blink_task(__unused void *params) {
+    hard_assert(cyw43_arch_init() == PICO_OK);
+    while (true) {
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, on);
+        vTaskDelay(1000*portTICK_PERIOD_MS);
+        on = !on;
+    }
+}
+
 int main( void )
 {
     stdio_init_all();
+
     const char *rtos_name;
     rtos_name = "FreeRTOS";
 
@@ -82,9 +97,14 @@ int main( void )
     canbus_setup();
 
     TaskHandle_t task;
-    xTaskCreate(receive_task, "MainThread",
+    xTaskCreate(send_task, "MainThread",
                 MAIN_TASK_STACK_SIZE, NULL, MAIN_TASK_PRIORITY, &task);
+
+    // HEARTBEAT
+    xTaskCreate(blink_task, "BlinkThread",
+                BLINK_TASK_STACK_SIZE, NULL, BLINK_TASK_PRIORITY, NULL);
+
     vTaskStartScheduler();
-    
+
     return 0;
 }
