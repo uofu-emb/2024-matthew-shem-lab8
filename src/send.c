@@ -4,7 +4,6 @@
 #include <pico/stdlib.h>
 #include <FreeRTOS.h>
 #include <task.h>
-#include "pico/multicore.h"
 #include "pico/cyw43_arch.h"
 #include <queue.h>
 
@@ -50,8 +49,9 @@ void canbus_setup(void)
 
 void receive_task(__unused void *params) {
     struct can2040_msg data;
-
     while (1) {
+        vTaskDelay(5000*portTICK_PERIOD_MS);
+        printf("AWAITING MESSAGE\n");
         xQueueReceive(msgs, &data, portMAX_DELAY);
         printf("WE GOT A MESSAGE");
     }
@@ -92,12 +92,12 @@ int main( void )
     const char *rtos_name;
     rtos_name = "FreeRTOS";
 
-    xQueueCreate(100,sizeof(struct can2040_msg));
+    msgs = xQueueCreate(100, sizeof(struct can2040_msg));
 
     canbus_setup();
 
     TaskHandle_t task;
-    xTaskCreate(send_task, "MainThread",
+    xTaskCreate(receive_task, "MainThread",
                 MAIN_TASK_STACK_SIZE, NULL, MAIN_TASK_PRIORITY, &task);
 
     // HEARTBEAT
