@@ -98,7 +98,7 @@ int main( void )
 
     TaskHandle_t task;
     xTaskCreate(receive_task, "MainThread",
-                MAIN_TASK_STACK_SIZE, NULL, MAIN_TASK_PRIORITY, &task);
+                MAIN_TASK_STACK_SIZE, NULL, TALK_TASK_PRIORITY, &task);
 
     // HEARTBEAT
     xTaskCreate(blink_task, "BlinkThread",
