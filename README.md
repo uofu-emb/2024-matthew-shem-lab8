@@ -1,3 +1,6 @@
+# A picture of our wiring is uploaded as the "wiring.PNG" file.
+
+
 # Renode setup
 The Raspberry Pico needs configuration files for Renode to work properly.
 
